@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Cadastro de Pessoas</title>
+</head>
+<body>
+  <h1>Cadastro de Pessoas</h1>
+  <form id="form">
+    <input type="text" id="nome" placeholder="Nome" required>
+    <input type="email" id="email" placeholder="Email" required>
+    <input type="number" id="idade" placeholder="Idade" required>
+    <button type="submit">Cadastrar</button>
+  </form>
+
+  <h2>Lista</h2>
+  <ul id="lista"></ul>
+
+  <script>
+    async function carregar() {
+      const res = await fetch('/pessoas');
+      const pessoas = await res.json();
+      const lista = document.getElementById('lista');
+      lista.innerHTML = '';
+      pessoas.forEach(p => {
+        const item = document.createElement('li');
+        item.textContent = `${p.nome} (${p.email}, ${p.idade})`;
+        lista.appendChild(item);
+      });
+    }
+
+    document.getElementById('form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await fetch('/pessoas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome: document.getElementById('nome').value,
+          email: document.getElementById('email').value,
+          idade: parseInt(document.getElementById('idade').value)
+        })
+      });
+      carregar();
+    });
+
+    carregar();
+  </script>
+</body>
+</html>
