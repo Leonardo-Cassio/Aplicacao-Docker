@@ -1,0 +1,202 @@
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #f4f4f8;
+  margin: 0;
+  padding: 20px;
+}
+
+.container {
+  max-width: 600px;
+  margin: auto;
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h1, h2 {
+  text-align: center;
+  color: #333;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+input, button {
+  padding: 10px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+button {
+  background-color: #0066cc;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+button:hover {
+  background-color: #004d99;
+}
+
+.lista {
+  list-style: none;
+  padding-left: 0;
+}
+
+.lista li {
+  background: #e7f0fd;
+  margin: 8px 0;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+/* Estilo para o container de resultado da busca */
+.busca-container {
+  border: 2px solid #dc3545;
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 16px;
+  margin-top: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Texto dentro do container */
+.busca-container p {
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+}
+
+/* Botões do container */
+.busca-container button {
+  padding: 8px 16px;
+  margin-right: 10px;
+  font-size: 0.95rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Estilo para o botão de excluir */
+.busca-container button:first-of-type {
+  background-color: #dc3545;
+  color: white;
+}
+
+.busca-container button:first-of-type:hover {
+  background-color: #c82333;
+}
+
+/* Estilo para o botão de atualizar */
+.busca-container button:last-of-type {
+  background-color: #007bff;
+  color: white;
+}
+
+.busca-container button:last-of-type:hover {
+  background-color: #0069d9;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f5f6fa;
+  color: #2f3640;
+  margin: 0;
+  padding: 20px;
+}
+
+h1, h2, h3 {
+  color: #353b48;
+}
+
+form, .busca, #form-atualizar {
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 15px 20px;
+  margin-bottom: 20px;
+}
+
+input, button {
+  padding: 10px;
+  margin: 5px 0;
+  border: 1px solid #dcdde1;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+input:focus {
+  outline: none;
+  border-color: #00a8ff;
+}
+
+button {
+  background-color: #00a8ff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #0097e6;
+}
+
+#lista-pessoas>div {
+  background: #fff;
+  padding: 10px 15px;
+  margin-top: 8px;
+  border-left: 4px solid #00a8ff;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.resultado-container {
+  background-color: #fff;
+  border-left: 5px solid #718093;
+  padding: 15px;
+  border-radius: 10px;
+  margin-top: 15px;
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.08);
+}
+
+.resultado-container p {
+  margin: 0 0 10px;
+}
+
+.resultado-container button {
+  margin-right: 10px;
+}
+
+#form-atualizar input {
+  display: block;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+@media (min-width: 600px) {
+  form, .busca, #form-atualizar {
+    max-width: 500px;
+  }
+}
+
+/* Centraliza o conteúdo principal da página */
+.wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh; /* altura total da tela */
+  background-color: #f5f6fa;
+  padding: 20px;
+}

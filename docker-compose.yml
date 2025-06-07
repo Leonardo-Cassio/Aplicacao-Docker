@@ -1,12 +1,11 @@
 version: "3.8"
 
 services:
-  # Backend da aplicação
   app:
     build: ./backend
     container_name: app
     ports:
-      - "3000:3000"
+      - "8164:3000"  
     depends_on:
       - mysql
     networks:
@@ -18,12 +17,11 @@ services:
       - DB_PASSWORD=root
       - DB_NAME=app_db
 
-  # Banco de dados MySQL da aplicação
   mysql:
     image: mysql:8
     container_name: mysql
     ports:
-      - "3308:3306" # porta externa 3308 para evitar conflito
+      - "8165:3306"  
     environment:
       - MYSQL_ROOT_PASSWORD=root
       - MYSQL_DATABASE=app_db
@@ -32,12 +30,11 @@ services:
     networks:
       - app-network
 
-  # SonarQube
   sonarqube:
     image: sonarqube:latest
     container_name: sonarqube
     ports:
-      - "9000:9000"
+      - "8166:9000"
     environment:
       - SONAR_JDBC_URL=jdbc:postgresql://sonar_db:5432/sonarqube
       - SONAR_JDBC_USERNAME=sonar
@@ -47,10 +44,9 @@ services:
     networks:
       - sonar-network
 
-  # Banco de dados do SonarQube
   sonar_db:
     image: postgres:13
-    container_name: sonarqube_db
+    container_name: sonar_db
     environment:
       - POSTGRES_USER=sonar
       - POSTGRES_PASSWORD=sonar
@@ -60,12 +56,10 @@ services:
     networks:
       - sonar-network
 
-# Volumes persistentes
 volumes:
   mysql_data:
   sonar_db_data:
 
-# Redes separadas para evitar conflitos
 networks:
   app-network:
   sonar-network:

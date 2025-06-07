@@ -2,54 +2,25 @@ const express = require('express');
 const path = require('path');
 const sequelize = require('./database/db');
 const Pessoa = require('./models/Pessoa');
-
+const pessoasRouter = require('./routes/pessoas');
 const app = express();
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/pessoas', pessoasRouter); // usa corretamente o router
 
-// Rotas CRUD
-app.get('/pessoas', async (req, res) => {
+(async () => {
   try {
-    const pessoas = await Pessoa.findAll();
-    res.json(pessoas);
-  } catch (err) {
-    res.status(500).json({ erro: 'Erro ao buscar pessoas' });
+    await sequelize.authenticate();
+    console.log('Conectado ao banco com sucesso!');
+    await sequelize.sync();
+    console.log('Tabelas sincronizadas!');
+  } catch (error) {
+    console.error('Erro ao conectar ou sincronizar o banco:', error);
   }
-});
+})();
 
-app.post('/pessoas', async (req, res) => {
-  try {
-    const pessoa = await Pessoa.create(req.body);
-    res.json(pessoa);
-  } catch (err) {
-    res.status(500).json({ erro: 'Erro ao criar pessoa' });
-  }
-});
-
-app.put('/pessoas/:id', async (req, res) => {
-  try {
-    const id = req.params.id;
-    await Pessoa.update(req.body, { where: { id } });
-    res.json({ mensagem: 'Atualizado com sucesso' });
-  } catch (err) {
-    res.status(500).json({ erro: 'Erro ao atualizar pessoa' });
-  }
-});
-
-app.delete('/pessoas/:id', async (req, res) => {
-  try {
-    const id = req.params.id;
-    await Pessoa.destroy({ where: { id } });
-    res.json({ mensagem: 'Deletado com sucesso' });
-  } catch (err) {
-    res.status(500).json({ erro: 'Erro ao deletar pessoa' });
-  }
-});
-
-sequelize.sync().then(() => {
-  const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => {
-    console.log(`Servidor rodando na porta ${PORT}`);
-  });
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Servidor rodando na porta ${PORT}`);
 });

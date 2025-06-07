@@ -1,4 +1,4 @@
-name: CI/CD - Deploy Automático
+name: CI/CD - Deploy completo
 
 on:
   push:
@@ -13,38 +13,59 @@ jobs:
       - name: Checkout do código
         uses: actions/checkout@v3
 
-      - name: Configurar Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
+      - name: Build da imagem Docker
+        run: docker build -t aluno/app:latest ./backend
 
-      - name: Instalar dependências
-        run: |
-          cd backend
-          npm install
+      - name: Login no Docker Hub
+        run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
 
-      - name: Análise com SonarQube
-        uses: sonarsource/sonarqube-scan-action@master
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      - name: Push da imagem para o Docker Hub
+        run: docker push aluno/app:latest
 
-      - name: Copiar arquivos para o servidor remoto
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "."
-          target: "~/app"
-
-      - name: Executar deploy com Docker Compose no servidor remoto
+      - name: Subir SonarQube temporário no servidor remoto
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.REMOTE_HOST }}
+          host: ${{ secrets.REMOTE_HOST_IP }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd ~/app
-            docker compose down
-            docker compose up -d --build
+            docker run -d --name temp-sonar -p 9000:9000 sonarqube:latest
+            echo "Esperando o SonarQube iniciar..."
+            sleep 60
+
+      - name: Análise de código com SonarQube
+        uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: http://201.23.3.86:9000
+
+      - name: Aguardar conclusão da análise
+        run: sleep 30
+
+      - name: Verificar resultado da análise (Quality Gate)
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: http://201.23.3.86:9000
+
+      - name: Encerrar o SonarQube temporário
+        if: always()
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.REMOTE_HOST_IP }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: docker rm -f temp-sonar || true
+
+      - name: Fazer o deploy da aplicação no servidor
+        if: success()
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.REMOTE_HOST_IP }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            docker rm -f app || true
+            docker image rm aluno/app:latest || true
+            docker pull aluno/app:latest
+            docker run -d --name app -p 8164:3000 aluno/app:latest
