@@ -27,9 +27,9 @@ Esta aplicação fullstack permite cadastrar, visualizar, atualizar e excluir da
 
 ## 🌐 Funcionalidades
 
-- ✅ Cadastro de pessoas com nome e idade
+- ✅ Cadastro de pessoas com nome, idade e e-mail
 - 🔍 Busca por nome
-- 🧽 Exclusão com confirmação
+- 🧽 Exclusão de dados 
 - 🔁 Atualização de dados
 - 📋 Listagem automática dos dados
 - 💾 Dados persistidos em banco MySQL
