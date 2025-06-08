@@ -14,7 +14,7 @@ Esta aplicação fullstack permite cadastrar, visualizar, atualizar e excluir da
 - Docker / Docker Compose
 
 ### Frontend
-- HTML5, CSS3 e JavaScript
+- HTML5, CSS3 e JavaScript vanilla
 - Interface simples hospedada em `public/index.html`
 
 ### DevOps
