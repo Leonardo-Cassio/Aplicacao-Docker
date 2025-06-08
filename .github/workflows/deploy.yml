@@ -9,6 +9,17 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    services:
+      sonarqube:
+        image: sonarqube:community
+        ports:
+          - 9000:9000
+        options: >-
+          --health-cmd="curl --fail http://localhost:9000/api/system/health || exit 1"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
     steps:
       - name: Checkout do código
         uses: actions/checkout@v3
@@ -22,40 +33,24 @@ jobs:
       - name: Push da imagem para o Docker Hub
         run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/app:latest
 
-      - name: Subir SonarQube temporário no servidor remoto
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.REMOTE_HOST_IP }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            docker run -d --name temp-sonar -p 9000:9000 sonarqube:latest
-            echo "Esperando o SonarQube iniciar..."
-            sleep 60
+      - name: Aguardar SonarQube subir
+        run: |
+          echo "Aguardando o SonarQube iniciar..."
+          until curl -s http://localhost:9000/api/system/status | grep -q '"status":"UP"'; do
+            sleep 5
+          done
 
       - name: Análise de código com SonarQube
         uses: sonarsource/sonarqube-scan-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: http://201.23.3.86:9000
-
-      - name: Aguardar conclusão da análise
-        run: sleep 30
+          SONAR_HOST_URL: http://localhost:9000
 
       - name: Verificar resultado da análise (Quality Gate)
         uses: sonarsource/sonarqube-quality-gate-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: http://201.23.3.86:9000
-
-      - name: Encerrar o SonarQube temporário
-        if: always()
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.REMOTE_HOST_IP }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: docker rm -f temp-sonar || true
+          SONAR_HOST_URL: http://localhost:9000
 
       - name: Fazer o deploy da aplicação no servidor
         if: success()
