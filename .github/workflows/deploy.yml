@@ -29,7 +29,7 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            docker run -d --name temp-sonar -p 9000:9000 sonarqube:latest
+            docker run -d --name temp-sonar -p 8166:9000 sonarqube:latest
             echo "Esperando o SonarQube iniciar..."
             sleep 60
 
@@ -37,7 +37,7 @@ jobs:
         uses: sonarsource/sonarqube-scan-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: http://201.23.3.86:9000
+          SONAR_HOST_URL: http://201.23.3.86:8166
 
       - name: Aguardar conclusão da análise
         run: sleep 30
@@ -46,7 +46,7 @@ jobs:
         uses: sonarsource/sonarqube-quality-gate-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: http://201.23.3.86:9000
+          SONAR_HOST_URL: http://201.23.3.86:8166
 
       - name: Encerrar o SonarQube temporário
         if: always()
