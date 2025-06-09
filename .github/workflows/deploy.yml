@@ -30,17 +30,21 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             docker run -d --name temp-sonar -p 8166:9000 sonarqube:latest
-            echo "Esperando o SonarQube iniciar..."
-            sleep 60
+            echo "Aguardando SonarQube iniciar..."
+            for i in {1..30}; do
+              if curl -s http://localhost:8166/api/system/status | grep -q '"status":"UP"'; then
+                echo "SonarQube está UP!"
+                break
+              fi
+              echo "Esperando SonarQube... ($i/30)"
+              sleep 5
+            done
 
       - name: Análise de código com SonarQube
         uses: sonarsource/sonarqube-scan-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: http://201.23.3.86:8166
-
-      - name: Aguardar conclusão da análise
-        run: sleep 30
 
       - name: Verificar resultado da análise (Quality Gate)
         uses: sonarsource/sonarqube-quality-gate-action@master
@@ -66,6 +70,6 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             docker rm -f app || true
-            docker image rm aluno/app:latest || true
-            docker pull aluno/app:latest
-            docker run -d --name app -p 8164:3000 aluno/app:latest
+            docker image rm ${{ secrets.DOCKER_HUB_USERNAME }}/app:latest || true
+            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/app:latest
+            docker run -d --name app -p 8164:3000 ${{ secrets.DOCKER_HUB_USERNAME }}/app:latest
