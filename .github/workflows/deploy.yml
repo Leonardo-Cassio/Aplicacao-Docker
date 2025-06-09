@@ -29,10 +29,10 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            docker run -d --name temp-sonar -p 8166:9000 sonarqube:latest
+            docker run -d --name temp-sonar -p 8168:9000 sonarqube:latest
             echo "Aguardando SonarQube iniciar..."
             for i in {1..30}; do
-              if curl -s http://localhost:8166/api/system/status | grep -q '"status":"UP"'; then
+              if curl -s http://localhost:8168/api/system/status | grep -q '"status":"UP"'; then
                 echo "SonarQube está UP!"
                 break
               fi
@@ -44,13 +44,13 @@ jobs:
         uses: sonarsource/sonarqube-scan-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: http://201.23.3.86:8166
+          SONAR_HOST_URL: http://201.23.3.86:8168
 
       - name: Verificar resultado da análise (Quality Gate)
         uses: sonarsource/sonarqube-quality-gate-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: http://201.23.3.86:8166
+          SONAR_HOST_URL: http://201.23.3.86:8168
 
       - name: Encerrar o SonarQube temporário
         if: always()
