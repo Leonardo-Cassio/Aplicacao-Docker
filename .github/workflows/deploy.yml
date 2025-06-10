@@ -13,11 +13,11 @@ jobs:
       sonarqube:
         image: sonarqube:latest
         ports:
-          - 9000:9000
+          - 8166:9000
         env:
           SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
         options: >-
-          --health-cmd="curl -f http://localhost:9000/api/system/status || exit 1"
+          --health-cmd="curl -f http://localhost:8166/api/system/status || exit 1"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=10
@@ -30,7 +30,7 @@ jobs:
         run: |
           echo "Aguardando SonarQube ficar disponível..."
           for i in {1..30}; do
-            status=$(curl -s http://localhost:9000/api/system/status | jq -r .status)
+            status=$(curl -s http://localhost:8166/api/system/status | jq -r .status)
             if [ "$status" = "UP" ]; then
               echo "SonarQube está UP!"
               break
@@ -43,13 +43,13 @@ jobs:
         uses: sonarsource/sonarqube-scan-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: http://localhost:9000
+          SONAR_HOST_URL: http://localhost:8166
 
       - name: Verificar resultado da análise (Quality Gate)
         uses: sonarsource/sonarqube-quality-gate-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: http://localhost:9000
+          SONAR_HOST_URL: http://localhost:8166
 
       - name: Build da imagem Docker
         run: docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/app:latest ./backend
