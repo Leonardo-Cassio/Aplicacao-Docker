@@ -37,13 +37,26 @@ jobs:
             
             # Criar nova rede e container
             docker network create leosonar-net
-            docker run -d --name leosonar --network leosonar-net -p 8166:9000 sonarqube:community
+            
+            # Criar volume para dados do Elasticsearch
+            docker volume create leosonar-data
+            
+            # Subir SonarQube com configurações específicas
+            docker run -d --name leosonar \
+              --network leosonar-net \
+              -p 8166:9000 \
+              -v leosonar-data:/opt/sonarqube/data \
+              -e SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true \
+              -e SONAR_JDBC_URL=jdbc:h2:tcp://localhost:9092/sonar \
+              -e SONAR_JDBC_USERNAME=sonar \
+              -e SONAR_JDBC_PASSWORD=sonar \
+              sonarqube:9.9-community
             
             echo "Aguardando SonarQube iniciar..."
             for i in {1..60}; do
-              echo "Resposta do /api/server/version:";
-              curl -s http://localhost:8166/api/server/version || true
-              if curl -s http://localhost:8166/api/server/version | grep -E '^[0-9]'; then
+              echo "Resposta do /api/system/status:";
+              STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8166/api/system/status)
+              if [ "$STATUS" = "200" ]; then
                 echo "SonarQube está pronto!"
                 break
               fi
@@ -70,6 +83,7 @@ jobs:
               docker stop leosonar
               docker rm leosonar
               docker network rm leosonar-net
+              docker volume rm leosonar-data
               exit 1
             fi
             echo "Token gerado: $SONAR_TOKEN"
@@ -100,6 +114,7 @@ jobs:
             docker stop leosonar || true
             docker rm leosonar || true
             docker network rm leosonar-net || true
+            docker volume rm leosonar-data || true
 
       - name: Fazer o deploy da aplicação no servidor
         if: success()
