@@ -23,6 +23,7 @@ jobs:
         run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/app:latest
 
       - name: Subir SonarQube temporário no servidor remoto
+        id: sonarqube
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.REMOTE_HOST_IP }}
@@ -72,7 +73,7 @@ jobs:
               exit 1
             fi
             echo "Token gerado: $SONAR_TOKEN"
-            echo "SONAR_TOKEN=$SONAR_TOKEN" >> $GITHUB_ENV
+            echo "::set-output name=sonar_token::$SONAR_TOKEN"
 
       - name: Análise de código com SonarQube
         run: |
@@ -80,12 +81,12 @@ jobs:
             -Dsonar.projectKey=leosonar-project \
             -Dsonar.sources=./backend \
             -Dsonar.host.url=http://201.23.3.86:8166 \
-            -Dsonar.token=${{ env.SONAR_TOKEN }}
+            -Dsonar.token=${{ steps.sonarqube.outputs.sonar_token }}
 
       - name: Verificar resultado da análise (Quality Gate)
         uses: sonarsource/sonarqube-quality-gate-action@master
         env:
-          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+          SONAR_TOKEN: ${{ steps.sonarqube.outputs.sonar_token }}
           SONAR_HOST_URL: http://201.23.3.86:8166
 
       - name: Encerrar o SonarQube temporário
