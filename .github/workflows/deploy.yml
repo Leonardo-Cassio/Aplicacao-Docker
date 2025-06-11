@@ -29,8 +29,15 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            docker network create sonar-net || true
-            docker run -d --name sonar --network sonar-net -p 8166:9000 sonarqube:community
+            # Limpar containers e redes antigas
+            docker stop leosonar || true
+            docker rm leosonar || true
+            docker network rm leosonar-net || true
+            
+            # Criar nova rede e container
+            docker network create leosonar-net
+            docker run -d --name leosonar --network leosonar-net -p 8166:9000 sonarqube:community
+            
             echo "Aguardando SonarQube iniciar..."
             for i in {1..60}; do
               echo "Resposta do /api/server/version:";
@@ -42,6 +49,7 @@ jobs:
               echo "Aguardando SonarQube... ($i/60)"
               sleep 5
             done
+            
             echo "Aguardando endpoint de autenticação do SonarQube..."
             for i in {1..30}; do
               STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST -u admin:admin http://localhost:8166/api/authentication/login)
@@ -52,13 +60,15 @@ jobs:
               echo "Aguardando autenticação... ($i/30)"
               sleep 2
             done
+            
             echo "Gerando token SonarQube..."
-            SONAR_TOKEN=$(curl -s -u admin:admin -X POST "http://localhost:8166/api/user_tokens/generate?name=ci-token" | grep -oP '"token":"\K[^"]+')
+            SONAR_TOKEN=$(curl -s -u admin:admin -X POST "http://localhost:8166/api/user_tokens/generate?name=leosonar-token" | grep -oP '"token":"\K[^"]+')
             if [ -z "$SONAR_TOKEN" ]; then
-              echo "Erro ao gerar token do SonarQube. Abortando pipeline."
-              docker logs sonar | tail -50
-              docker stop sonar
-              docker rm sonar
+              echo "Erro ao gerar token do SonarQube. Logs do container:"
+              docker logs leosonar | tail -50
+              docker stop leosonar
+              docker rm leosonar
+              docker network rm leosonar-net
               exit 1
             fi
             echo "Token gerado: $SONAR_TOKEN"
@@ -67,7 +77,7 @@ jobs:
       - name: Análise de código com SonarQube
         run: |
           sonar-scanner \
-            -Dsonar.projectKey=meu-projeto-node \
+            -Dsonar.projectKey=leosonar-project \
             -Dsonar.sources=./backend \
             -Dsonar.host.url=http://201.23.3.86:8166 \
             -Dsonar.token=${{ env.SONAR_TOKEN }}
@@ -86,8 +96,9 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            docker stop sonar || true
-            docker rm sonar || true
+            docker stop leosonar || true
+            docker rm leosonar || true
+            docker network rm leosonar-net || true
 
       - name: Fazer o deploy da aplicação no servidor
         if: success()
