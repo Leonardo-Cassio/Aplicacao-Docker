@@ -34,6 +34,7 @@ jobs:
             docker stop leosonar || true
             docker rm leosonar || true
             docker network rm leosonar-net || true
+            docker volume rm leosonar-data || true
             
             # Criar nova rede e container
             docker network create leosonar-net
@@ -47,31 +48,32 @@ jobs:
               -p 8166:9000 \
               -v leosonar-data:/opt/sonarqube/data \
               -e SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true \
+              -e SONAR_EMBEDDED_DATABASE_PORT=9092 \
               -e SONAR_JDBC_URL=jdbc:h2:tcp://localhost:9092/sonar \
               -e SONAR_JDBC_USERNAME=sonar \
               -e SONAR_JDBC_PASSWORD=sonar \
               sonarqube:9.9-community
             
             echo "Aguardando SonarQube iniciar..."
-            for i in {1..60}; do
+            for i in {1..30}; do
               echo "Resposta do /api/system/status:";
               STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8166/api/system/status)
               if [ "$STATUS" = "200" ]; then
                 echo "SonarQube está pronto!"
                 break
               fi
-              echo "Aguardando SonarQube... ($i/60)"
+              echo "Aguardando SonarQube... ($i/30)"
               sleep 5
             done
             
             echo "Aguardando endpoint de autenticação do SonarQube..."
-            for i in {1..30}; do
+            for i in {1..15}; do
               STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST -u admin:admin http://localhost:8166/api/authentication/login)
               if [ "$STATUS" = "200" ]; then
                 echo "Endpoint de autenticação pronto!"
                 break
               fi
-              echo "Aguardando autenticação... ($i/30)"
+              echo "Aguardando autenticação... ($i/15)"
               sleep 2
             done
             
