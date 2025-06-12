@@ -1,6 +1,9 @@
 # Usa imagem oficial do Node.js
 FROM node:18
 
+# Instala o netcat-openbsd (necessário para aguardar o MySQL)
+RUN apt-get update && apt-get install -y netcat-openbsd
+
 # Define diretório de trabalho dentro do container
 WORKDIR /app
 
