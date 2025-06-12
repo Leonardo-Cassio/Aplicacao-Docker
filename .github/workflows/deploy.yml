@@ -75,7 +75,36 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            docker rm -f app || true
+            # Criar rede se não existir
+            docker network create app-network || true
+
+            # Remover containers antigos
+            docker rm -f app mysql || true
             docker image rm ${{ secrets.DOCKER_HUB_USERNAME }}/app:latest || true
+
+            # Subir MySQL
+            docker run -d --name mysql \
+              --network app-network \
+              -p 8165:3306 \
+              -e MYSQL_ROOT_PASSWORD=root \
+              -e MYSQL_DATABASE=app_db \
+              -v mysql_data:/var/lib/mysql \
+              mysql:8
+
+            echo "Aguardando MySQL iniciar..."
+            sleep 20
+
+            # Subir aplicação
             docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/app:latest
-            docker run -d --name app -p 8164:3000 ${{ secrets.DOCKER_HUB_USERNAME }}/app:latest
+            docker run -d --name app \
+              --network app-network \
+              -p 8164:3000 \
+              -e DB_HOST=mysql \
+              -e DB_PORT=3306 \
+              -e DB_USER=root \
+              -e DB_PASSWORD=root \
+              -e DB_NAME=app_db \
+              ${{ secrets.DOCKER_HUB_USERNAME }}/app:latest
+
+            echo "Containers em execução:"
+            docker ps
