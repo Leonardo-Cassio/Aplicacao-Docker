@@ -23,4 +23,4 @@ RUN chmod +x wait-for.sh
 EXPOSE 3000
 
 # Comando de inicialização (aguarda o MySQL antes de rodar)
-CMD ["./wait-for.sh", "mysql:3306", "--", "npm", "start"]
+CMD ["./wait-for.sh", "leo-mysql:3306", "--", "npm", "start"]
