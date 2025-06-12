@@ -104,7 +104,13 @@ jobs:
               -e DB_USER=root \
               -e DB_PASSWORD=root \
               -e DB_NAME=app_db \
+              -e PORT=3000 \
+              -e HOST=0.0.0.0 \
               ${{ secrets.DOCKER_HUB_USERNAME }}/app:latest
+
+            echo "Verificando logs da aplicação..."
+            sleep 5
+            docker logs app
 
             echo "Containers em execução:"
             docker ps
