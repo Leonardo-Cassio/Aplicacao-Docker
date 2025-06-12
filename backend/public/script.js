@@ -1,4 +1,5 @@
 const form = document.getElementById('form-cadastro');
+const API_URL = window.location.origin;
 
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -7,7 +8,7 @@ form.addEventListener('submit', async (e) => {
   const email = document.getElementById('email').value;
   const idade = parseInt(document.getElementById('idade').value);
 
-  const res = await fetch('http://localhost:8164/pessoas', {
+  const res = await fetch(`${API_URL}/pessoas`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ nome, email, idade })
@@ -20,7 +21,7 @@ form.addEventListener('submit', async (e) => {
 });
 
 async function carregarPessoas() {
-  const resposta = await fetch('http://localhost:8164/pessoas');
+  const resposta = await fetch(`${API_URL}/pessoas`);
   const pessoas = await resposta.json();
 
   const lista = document.getElementById('lista-pessoas');
@@ -38,7 +39,7 @@ document.addEventListener('DOMContentLoaded', carregarPessoas);
 
 async function buscarPessoa() {
   const nome = document.getElementById('busca-nome').value;
-  const resposta = await fetch('http://localhost:8164/pessoas');
+  const resposta = await fetch(`${API_URL}/pessoas`);
   const pessoas = await resposta.json();
 
   const pessoa = pessoas.find(p => p.nome.toLowerCase() === nome.toLowerCase());
@@ -61,7 +62,7 @@ async function buscarPessoa() {
 
 async function confirmarExclusao(id) {
   if (confirm("Tem certeza que deseja excluir esse dado?")) {
-    const res = await fetch(`http://localhost:8164/pessoas/${id}`, { method: 'DELETE' });
+    const res = await fetch(`${API_URL}/pessoas/${id}`, { method: 'DELETE' });
     if (res.ok) {
       alert('Pessoa excluída!');
       carregarPessoas();
@@ -85,7 +86,7 @@ async function enviarAtualizacao() {
   const email = document.getElementById('novo-email').value;
   const idade = parseInt(document.getElementById('nova-idade').value);
 
-  const res = await fetch(`http://localhost:8164/pessoas/${idAtualizando}`, {
+  const res = await fetch(`${API_URL}/pessoas/${idAtualizando}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ nome, email, idade })
