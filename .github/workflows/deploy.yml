@@ -22,101 +22,50 @@ jobs:
       - name: Push da imagem para o Docker Hub
         run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/app:latest
 
-      - name: Subir SonarQube temporário no servidor remoto
-        id: sonarqube
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.REMOTE_HOST_IP }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            # Limpar containers e redes antigas
-            docker stop leosonar || true
-            docker rm leosonar || true
-            docker network rm leosonar-net || true
-            docker volume rm leosonar-data || true
-            
-            # Criar nova rede e container
-            docker network create leosonar-net
-            
-            # Criar volume para dados do Elasticsearch
-            docker volume create leosonar-data
-            
-            # Subir SonarQube com configurações específicas
-            docker run -d --name leosonar \
-              --network leosonar-net \
-              -p 8166:9000 \
-              -v leosonar-data:/opt/sonarqube/data \
-              -e SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true \
-              -e SONAR_EMBEDDED_DATABASE_PORT=9092 \
-              -e SONAR_JDBC_URL=jdbc:h2:tcp://localhost:9092/sonar \
-              -e SONAR_JDBC_USERNAME=sonar \
-              -e SONAR_JDBC_PASSWORD=sonar \
-              sonarqube:9.9-community
-            
-            echo "Aguardando SonarQube iniciar..."
-            for i in {1..30}; do
-              echo "Resposta do /api/system/status:";
-              STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8166/api/system/status)
-              if [ "$STATUS" = "200" ]; then
-                echo "SonarQube está pronto!"
-                break
-              fi
-              echo "Aguardando SonarQube... ($i/30)"
-              sleep 5
-            done
-            
-            echo "Aguardando endpoint de autenticação do SonarQube..."
-            for i in {1..15}; do
-              STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST -u admin:admin http://localhost:8166/api/authentication/login)
-              if [ "$STATUS" = "200" ]; then
-                echo "Endpoint de autenticação pronto!"
-                break
-              fi
-              echo "Aguardando autenticação... ($i/15)"
-              sleep 2
-            done
-            
-            echo "Gerando token SonarQube..."
-            SONAR_TOKEN=$(curl -s -u admin:admin -X POST "http://localhost:8166/api/user_tokens/generate?name=leosonar-token" | grep -oP '"token":"\K[^"]+')
-            if [ -z "$SONAR_TOKEN" ]; then
-              echo "Erro ao gerar token do SonarQube. Logs do container:"
-              docker logs leosonar | tail -50
-              docker stop leosonar
-              docker rm leosonar
-              docker network rm leosonar-net
-              docker volume rm leosonar-data
-              exit 1
-            fi
-            echo "Token gerado: $SONAR_TOKEN"
-            echo "::set-output name=sonar_token::$SONAR_TOKEN"
-
-      - name: Análise de código com SonarQube
+      - name: Subir SonarQube temporário para análise
         run: |
-          sonar-scanner \
-            -Dsonar.projectKey=leosonar-project \
-            -Dsonar.sources=./backend \
-            -Dsonar.host.url=http://201.23.3.86:8166 \
-            -Dsonar.token=${{ steps.sonarqube.outputs.sonar_token }}
-
-      - name: Verificar resultado da análise (Quality Gate)
-        uses: sonarsource/sonarqube-quality-gate-action@master
-        env:
-          SONAR_TOKEN: ${{ steps.sonarqube.outputs.sonar_token }}
-          SONAR_HOST_URL: http://201.23.3.86:8166
-
-      - name: Encerrar o SonarQube temporário
-        if: always()
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.REMOTE_HOST_IP }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            docker stop leosonar || true
-            docker rm leosonar || true
-            docker network rm leosonar-net || true
-            docker volume rm leosonar-data || true
+          docker network create sonar-net || true
+          docker run -d --name sonar --network sonar-net -p 8166:9000 sonarqube:community
+          echo "Aguardando SonarQube iniciar..."
+          for i in {1..60}; do
+            echo "Resposta do /api/server/version:";
+            curl -s http://localhost:8166/api/server/version || true
+            if curl -s http://localhost:8166/api/server/version | grep -E '^[0-9]'; then
+              echo "SonarQube está pronto!"
+              break
+            fi
+            echo "Aguardando SonarQube... ($i/30)"
+            sleep 5
+          done
+          echo "Aguardando endpoint de autenticação do SonarQube..."
+          for i in {1..30}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST -u admin:admin http://localhost:8166/api/authentication/login)
+            if [ "$STATUS" = "200" ]; then
+              echo "Endpoint de autenticação pronto!"
+              break
+            fi
+            echo "Aguardando autenticação... ($i/30)"
+            sleep 2
+          done
+          echo "Gerando token SonarQube..."
+          SONAR_TOKEN=$(curl -s -u admin:admin -X POST "http://localhost:8166/api/user_tokens/generate?name=ci-token" | grep -oP '"token":"\K[^"]+')
+          if [ -z "$SONAR_TOKEN" ]; then
+            echo "Erro ao gerar token do SonarQube. Abortando pipeline."
+            docker logs sonar | tail -50
+            docker stop sonar
+            docker rm sonar
+            exit 1
+          fi
+          echo "Rodando análise com sonar-scanner..."
+          docker run --rm \
+            --network sonar-net \
+            -e SONAR_HOST_URL="http://sonar:9000" \
+            -e SONAR_TOKEN="$SONAR_TOKEN" \
+            -v ${{ github.workspace }}:/usr/src \
+            sonarsource/sonar-scanner-cli
+          echo "Removendo SonarQube..."
+          docker stop sonar
+          docker rm sonar
 
       - name: Fazer o deploy da aplicação no servidor
         if: success()
