@@ -14,13 +14,13 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Build da imagem Docker
-        run: docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/app:latest ./backend
+        run: docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/ci-cd-app:latest ./backend
 
       - name: Login no Docker Hub
         run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
 
       - name: Push da imagem para o Docker Hub
-        run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/app:latest
+        run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ci-cd-app:latest
 
       - name: Subir SonarQube temporário para análise
         run: |
@@ -75,15 +75,16 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Criar rede se não existir
+            # Criar redes se não existirem
             docker network create app-network || true
+            docker network create sonar-network || true
 
             # Remover containers antigos
-            docker rm -f app mysql || true
-            docker image rm ${{ secrets.DOCKER_HUB_USERNAME }}/app:latest || true
+            docker rm -f ci-cd-app ci-cd-mysql ci-cd-sonarqube ci-cd-sonar-db || true
+            docker image rm ${{ secrets.DOCKER_HUB_USERNAME }}/ci-cd-app:latest || true
 
             # Subir MySQL
-            docker run -d --name mysql \
+            docker run -d --name ci-cd-mysql \
               --network app-network \
               -p 8165:3306 \
               -e MYSQL_ROOT_PASSWORD=root \
@@ -94,23 +95,44 @@ jobs:
             echo "Aguardando MySQL iniciar..."
             sleep 20
 
+            # Subir PostgreSQL para SonarQube
+            docker run -d --name ci-cd-sonar-db \
+              --network sonar-network \
+              -e POSTGRES_USER=sonar \
+              -e POSTGRES_PASSWORD=sonar \
+              -e POSTGRES_DB=sonarqube \
+              -v sonar_db_data:/var/lib/postgresql/data \
+              postgres:13
+
+            echo "Aguardando PostgreSQL iniciar..."
+            sleep 10
+
+            # Subir SonarQube
+            docker run -d --name ci-cd-sonarqube \
+              --network sonar-network \
+              -p 8166:9000 \
+              -e SONAR_JDBC_URL=jdbc:postgresql://ci-cd-sonar-db:5432/sonarqube \
+              -e SONAR_JDBC_USERNAME=sonar \
+              -e SONAR_JDBC_PASSWORD=sonar \
+              sonarqube:latest
+
             # Subir aplicação
-            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/app:latest
-            docker run -d --name app \
+            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/ci-cd-app:latest
+            docker run -d --name ci-cd-app \
               --network app-network \
               -p 8164:3000 \
-              -e DB_HOST=mysql \
+              -e DB_HOST=ci-cd-mysql \
               -e DB_PORT=3306 \
               -e DB_USER=root \
               -e DB_PASSWORD=root \
               -e DB_NAME=app_db \
               -e PORT=3000 \
               -e HOST=0.0.0.0 \
-              ${{ secrets.DOCKER_HUB_USERNAME }}/app:latest
+              ${{ secrets.DOCKER_HUB_USERNAME }}/ci-cd-app:latest
 
             echo "Verificando logs da aplicação..."
             sleep 5
-            docker logs app
+            docker logs ci-cd-app
 
             echo "Containers em execução:"
             docker ps
