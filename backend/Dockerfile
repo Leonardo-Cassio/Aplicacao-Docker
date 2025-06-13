@@ -20,4 +20,4 @@ COPY . .
 EXPOSE 3000
 
 # Comando de inicialização (aguarda o MySQL antes de rodar)
-CMD ["sh", "-c", "while ! nc -z leo-mysql 3306; do echo 'Aguardando MySQL...'; sleep 2; done; npm start"]
+CMD ["sh", "-c", "while ! nc -z leo-mysql-2 3306; do echo 'Aguardando MySQL...'; sleep 2; done; npm start"]
