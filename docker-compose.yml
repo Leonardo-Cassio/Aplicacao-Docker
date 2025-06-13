@@ -5,7 +5,7 @@ services:
     build: ./backend
     container_name: leo-app
     ports:
-      - "8164:3000"  
+      - "8169:3000"  
     depends_on:
       - leo-mysql
     networks:

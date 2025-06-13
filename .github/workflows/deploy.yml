@@ -84,7 +84,7 @@ jobs:
             docker image rm ${{ secrets.DOCKER_HUB_USERNAME }}/ci-cd-app:latest || true
 
             # Subir MySQL
-            docker run -d --name ci-cd-mysql \
+            docker run -d --name leo-mysql \
               --network app-network \
               -p 8165:3306 \
               -e MYSQL_ROOT_PASSWORD=root \
@@ -121,7 +121,7 @@ jobs:
             docker run -d --name ci-cd-app \
               --network app-network \
               -p 8164:3000 \
-              -e DB_HOST=ci-cd-mysql \
+              -e DB_HOST=leo-mysql \
               -e DB_PORT=3306 \
               -e DB_USER=root \
               -e DB_PASSWORD=root \
@@ -132,7 +132,7 @@ jobs:
 
             echo "Verificando logs da aplicação..."
             sleep 5
-            docker logs ci-cd-app
+            docker logs leo-app
 
             echo "Containers em execução:"
             docker ps
