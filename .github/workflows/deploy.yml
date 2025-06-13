@@ -120,7 +120,7 @@ jobs:
             docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/ci-cd-app:latest
             docker run -d --name ci-cd-app \
               --network app-network \
-              -p 8164:3000 \
+              -p 8169:3000 \
               -e DB_HOST=leo-mysql \
               -e DB_PORT=3306 \
               -e DB_USER=root \

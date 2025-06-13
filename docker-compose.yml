@@ -11,7 +11,7 @@ services:
     networks:
       - leo-network
     environment:
-      - DB_HOST=leo-mysql
+      - DB_HOST=mysql
       - DB_USER=root
       - DB_PASSWORD=root
       - DB_NAME=app_db
