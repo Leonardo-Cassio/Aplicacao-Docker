@@ -19,7 +19,7 @@ services:
 
   leo-mysql:
     image: mysql:5.7
-    container_name: leo-mysql
+    container_name: leo-mysql-2
     ports:
       - "8165:3306"  
     environment:
