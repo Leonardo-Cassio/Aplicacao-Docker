@@ -3,15 +3,15 @@ version: "3.8"
 services:
   app:
     build: ./backend
-    container_name: leo-app
     ports:
-      - "8169:3000"  
+      - "8169:3000"
     depends_on:
       - leo-mysql
     networks:
       - leo-network
     environment:
-      - DB_HOST=mysql
+      - DB_HOST=leo-mysql
+      - DB_PORT=3306
       - DB_USER=root
       - DB_PASSWORD=root
       - DB_NAME=app_db
@@ -19,9 +19,8 @@ services:
 
   leo-mysql:
     image: mysql:5.7
-    container_name: leo-mysql-2
     ports:
-      - "8165:3306"  
+      - "8165:3306"
     environment:
       - MYSQL_ROOT_PASSWORD=root
       - MYSQL_DATABASE=app_db
@@ -37,7 +36,6 @@ services:
 
   sonarqube:
     image: sonarqube:latest
-    container_name: leo-sonarqube
     ports:
       - "9000:9000"
     environment:
@@ -56,7 +54,6 @@ services:
 
   leo-sonar-db:
     image: postgres:13
-    container_name: leo-sonar-db
     environment:
       - POSTGRES_USER=sonar
       - POSTGRES_PASSWORD=sonar
@@ -69,15 +66,11 @@ services:
 
 volumes:
   leo_mysql_data:
-    name: leo_mysql_data
   leo_sonar_db_data:
-    name: leo_sonar_db_data
   sonarqube_data:
   sonarqube_extensions:
   sonarqube_logs:
 
 networks:
   leo-network:
-    name: leo-network
   leo-sonar-network:
-    name: leo-sonar-network
