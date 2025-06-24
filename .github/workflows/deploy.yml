@@ -128,7 +128,7 @@ jobs:
             docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/meu-projeto-app-1:latest
             docker run -d --name meu-projeto-app-1 \
               --network app-network \
-              -p 8169:3000 \
+              -p 8167:3000 \
               -e DB_HOST=leo-mysql \
               -e DB_PORT=3306 \
               -e DB_USER=root \

@@ -4,7 +4,7 @@ services:
   app:
     build: ./backend
     ports:
-      - "8169:3000"
+      - "8167:3000"
     depends_on:
       - leo-mysql
     networks:
