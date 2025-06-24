@@ -22,7 +22,15 @@ form.addEventListener('submit', async (e) => {
 
 async function carregarPessoas() {
   const resposta = await fetch(`${API_URL}/pessoas`);
-  const pessoas = await resposta.json();
+  let pessoas = [];
+  try {
+    pessoas = await resposta.json();
+    if (!Array.isArray(pessoas)) {
+      pessoas = [];
+    }
+  } catch (e) {
+    pessoas = [];
+  }
 
   const lista = document.getElementById('lista-pessoas');
   lista.innerHTML = '';
