@@ -16,6 +16,7 @@ services:
       - DB_PASSWORD=root
       - DB_NAME=app_db
     restart: always
+    command: ["./wait-for.sh", "leo-mysql", "3306", "npm", "start"]
 
   leo-mysql:
     image: mysql:5.7
