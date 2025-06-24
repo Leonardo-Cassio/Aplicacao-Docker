@@ -80,17 +80,18 @@ jobs:
             docker network create sonar-network || true
 
             # Remover containers antigos
-            docker rm -f meu-projeto-app-1 meu-projeto-sonarqube-1 meu-projeto-leo-mysql-1 meu-projeto-leo-sonar-db-1 || true
+            docker rm -f meu-projeto-app-1 meu-projeto-sonarqube-1 leo-mysql meu-projeto-leo-sonar-db-1 || true
             docker image rm ${{ secrets.DOCKER_HUB_USERNAME }}/meu-projeto-app-1:latest || true
 
             # Subir MySQL
+            docker rm -f leo-mysql || true
             docker run -d --name leo-mysql \
               --network app-network \
               -p 8165:3306 \
               -e MYSQL_ROOT_PASSWORD=root \
               -e MYSQL_DATABASE=app_db \
               -v mysql_data:/var/lib/mysql \
-              mysql:5.7
+              mysql:8.0
 
             echo "Aguardando MySQL iniciar..."
             for i in {1..60}; do
