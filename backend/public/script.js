@@ -8,6 +8,8 @@ form.addEventListener('submit', async (e) => {
   const email = document.getElementById('email').value;
   const idade = parseInt(document.getElementById('idade').value);
 
+  console.log({ nome, email, idade });
+
   const res = await fetch(`${API_URL}/pessoas`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
