@@ -19,7 +19,7 @@ services:
     command: ["./wait-for.sh", "leo-mysql", "3306", "npm", "start"]
 
   leo-mysql:
-    container name: leo-mysql
+    container_name: leo-mysql
     image: mysql:8.0
     ports:
       - "8165:3306"
